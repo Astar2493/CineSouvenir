@@ -1,15 +1,16 @@
 "use client";
 
 import { useState } from "react";
-import { LIMITES, type Fiche } from "@/lib/fiche";
+import Link from "next/link";
 import AffichageFiche from "@/components/AffichageFiche";
+import { LIMITES, type FicheEnregistree } from "@/lib/fiche";
 
 export default function FormulaireFiche() {
   const [titre, setTitre] = useState("");
   const [texte, setTexte] = useState("");
   const [chargement, setChargement] = useState(false);
   const [erreur, setErreur] = useState("");
-  const [fiche, setFiche] = useState<Fiche | null>(null);
+  const [fiche, setFiche] = useState<FicheEnregistree | null>(null);
 
   const texteValide =
     texte.length >= LIMITES.texteMin && texte.length <= LIMITES.texteMax;
@@ -35,6 +36,8 @@ export default function FormulaireFiche() {
       }
 
       setFiche(donnees);
+      setTitre("");
+      setTexte("");
     } catch {
       setErreur("Impossible de contacter le serveur.");
     } finally {
@@ -97,7 +100,20 @@ export default function FormulaireFiche() {
         </p>
       )}
 
-      {fiche && <AffichageFiche fiche={fiche} />}
+      {fiche && (
+        <>
+          <p className="mt-6 rounded border border-green-300 bg-green-50 p-3 text-green-800">
+            Fiche enregistrée.{" "}
+            <Link
+              href={`/fiches/${fiche.id}`}
+              className="font-medium underline"
+            >
+              Retrouver cette fiche
+            </Link>
+          </p>
+          <AffichageFiche fiche={fiche} />
+        </>
+      )}
     </div>
   );
 }

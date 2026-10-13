@@ -9,6 +9,11 @@ export type Fiche = {
   questions: Question[];
 };
 
+export type FicheEnregistree = Fiche & {
+  id: string;
+  created_at: string;
+};
+
 export const LIMITES = {
   titreMax: 150,
   texteMin: 200,

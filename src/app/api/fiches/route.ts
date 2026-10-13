@@ -1,6 +1,7 @@
 import { LIMITES } from "@/lib/fiche";
 import { genererFiche } from "@/lib/generer-fiche";
 import { ErreurIA } from "@/lib/ia";
+import { creerClientSupabase } from "@/lib/supabase";
 
 export async function POST(request: Request) {
   const body = await request.json();
@@ -25,15 +26,45 @@ export async function POST(request: Request) {
     );
   }
 
+  // 1. Génération de la fiche par le modèle d'IA
+  let fiche;
   try {
-    const fiche = await genererFiche(titre, texte);
-    return Response.json(fiche);
+    fiche = await genererFiche(titre, texte);
   } catch (erreur) {
-    return reponseErreur(erreur);
+    return reponseErreurIA(erreur);
+  }
+
+  // 2. Enregistrement de la fiche dans la base de données
+  try {
+    const supabase = creerClientSupabase();
+    const { data, error } = await supabase
+      .from("fiches")
+      .insert({
+        titre: fiche.titre,
+        texte_source: texte,
+        synthese: fiche.synthese,
+        questions: fiche.questions,
+        modele: process.env.AI_MODEL,
+      })
+      .select("id, titre, synthese, questions, created_at")
+      .single();
+
+    if (error) throw error;
+
+    return Response.json(data, { status: 201 });
+  } catch (erreur) {
+    console.error("Erreur lors de l'enregistrement de la fiche :", erreur);
+    return Response.json(
+      {
+        erreur:
+          "La fiche a été générée mais n'a pas pu être enregistrée. Réessayez plus tard.",
+      },
+      { status: 500 },
+    );
   }
 }
 
-function reponseErreur(erreur: unknown) {
+function reponseErreurIA(erreur: unknown) {
   if (erreur instanceof ErreurIA && erreur.status === 429) {
     return Response.json(
       {
