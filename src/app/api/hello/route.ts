@@ -16,7 +16,7 @@ export async function POST(request: Request) {
   if (!body.texte || typeof body.texte !== "string") {
     return Response.json(
       { erreur: "Le champ 'texte' est obligatoire." },
-      { status: 400 },
+      { status: 400 }
     );
   }
 

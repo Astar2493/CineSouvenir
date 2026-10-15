@@ -11,8 +11,7 @@ export default function Home() {
         </Link>
       </div>
       <p className="mt-2 text-gray-600">
-        Collez un cours, obtenez une fiche de synthèse et des questions de
-        révision.
+        Collez un cours, obtenez une fiche de synthèse et des questions de révision.
       </p>
       <FormulaireFiche />
     </main>

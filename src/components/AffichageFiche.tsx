@@ -7,9 +7,7 @@ export default function AffichageFiche({ fiche }: { fiche: Fiche }) {
 
       <section className="mt-4">
         <h3 className="text-lg font-semibold">Synthèse</h3>
-        <p className="mt-2 whitespace-pre-line text-gray-800">
-          {fiche.synthese}
-        </p>
+        <p className="mt-2 whitespace-pre-line text-gray-800">{fiche.synthese}</p>
       </section>
 
       <section className="mt-6">

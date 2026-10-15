@@ -62,3 +62,19 @@ export async function appelerModele(
   const donnees = await reponse.json();
   return donnees.choices[0].message.content;
 }
+
+export function messageErreurIA(erreur: unknown): string {
+  if (erreur instanceof ErreurIA && erreur.status === 429) {
+    return "Le service d'IA est momentanément saturé.";
+  }
+
+  if (erreur instanceof ErreurIA && erreur.status === 413) {
+    return "Le texte est trop volumineux pour le service d'IA.";
+  }
+
+  if (erreur instanceof Error && erreur.name === "TimeoutError") {
+    return "Le service d'IA a mis trop de temps à répondre.";
+  }
+
+  return "La génération de la fiche a échoué.";
+}

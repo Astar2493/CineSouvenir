@@ -13,9 +13,7 @@ export default function TestApi() {
       body: JSON.stringify(contenu),
     });
     const donnees = await reponse.json();
-    setResultat(
-      `Statut ${reponse.status}\n${JSON.stringify(donnees, null, 2)}`,
-    );
+    setResultat(`Statut ${reponse.status}\n${JSON.stringify(donnees, null, 2)}`);
   }
 
   return (
