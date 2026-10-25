@@ -70,4 +70,8 @@ async function traiter(request: Request) {
   }
 }
 
-export const POST = verifySignatureAppRouter(traiter);
+// La vérification de signature est créée à la requête et non au chargement du module :
+// elle exige les clés QStash, qui ne sont pas toujours disponibles pendant le build
+export async function POST(request: Request) {
+  return verifySignatureAppRouter(traiter)(request);
+}
