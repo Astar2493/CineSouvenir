@@ -1,3 +1,4 @@
+import { lireRecherche } from "@/lib/recherche-serveur";
 import { creerClientServeur } from "@/lib/supabase/server";
 
 export async function GET(
@@ -15,15 +16,11 @@ export async function GET(
     return Response.json({ erreur: "Authentification requise." }, { status: 401 });
   }
 
-  const { data: fiche, error } = await supabase
-    .from("fiches")
-    .select("id, titre, synthese, questions, created_at, statut, message_erreur")
-    .eq("id", id)
-    .maybeSingle();
+  const recherche = await lireRecherche(supabase, id);
 
-  if (error || !fiche) {
-    return Response.json({ erreur: "Fiche introuvable." }, { status: 404 });
+  if (!recherche) {
+    return Response.json({ erreur: "Recherche introuvable." }, { status: 404 });
   }
 
-  return Response.json(fiche);
+  return Response.json(recherche);
 }

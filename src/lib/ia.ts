@@ -76,5 +76,5 @@ export function messageErreurIA(erreur: unknown): string {
     return "Le service d'IA a mis trop de temps à répondre.";
   }
 
-  return "La génération de la fiche a échoué.";
+  return "La recherche de films a échoué.";
 }

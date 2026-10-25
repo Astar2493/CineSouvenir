@@ -1,7 +1,7 @@
 import { verifySignatureAppRouter } from "@upstash/qstash/nextjs";
-import { genererFiche } from "@/lib/generer-fiche";
 import { ErreurIA, messageErreurIA } from "@/lib/ia";
 import { NOMBRE_REESSAIS } from "@/lib/qstash";
+import { rechercherFilms } from "@/lib/rechercher-films";
 import { creerClientAdmin } from "@/lib/supabase/admin";
 
 export const maxDuration = 60;
@@ -15,39 +15,45 @@ function estReessayable(erreur: unknown): boolean {
 }
 
 async function traiter(request: Request) {
-  const { ficheId } = await request.json();
+  const { rechercheId } = await request.json();
   const tentative = Number(request.headers.get("Upstash-Retried") ?? "0");
 
   // Le worker n'a pas d'utilisateur connecté : il utilise le client administrateur
   const supabase = creerClientAdmin();
 
-  const { data: fiche } = await supabase
-    .from("fiches")
-    .select("id, titre, texte_source, statut")
-    .eq("id", ficheId)
+  const { data: recherche } = await supabase
+    .from("recherches")
+    .select("id, souvenir, genre, epoque, details, animation, statut")
+    .eq("id", rechercheId)
     .maybeSingle();
 
-  // Idempotence : une fiche absente ou déjà traitée n'est pas générée une seconde fois
-  if (!fiche || fiche.statut !== "en_attente") {
+  // Idempotence : une recherche absente ou déjà traitée n'est pas relancée
+  if (!recherche || recherche.statut !== "en_attente") {
     return Response.json({ resultat: "ignoré" });
   }
 
   try {
-    const resultat = await genererFiche(fiche.titre, fiche.texte_source);
+    const films = await rechercherFilms(recherche);
+
+    // Les films sont enregistrés avant le changement de statut, pour que le formulaire
+    // les trouve dès qu'il est notifié ; l'upsert évite les doublons en cas de nouvelle tentative
+    const { error: erreurFilms } = await supabase.from("films_proposes").upsert(
+      films.map((film, index) => ({ recherche_id: recherche.id, rang: index + 1, ...film })),
+      { onConflict: "recherche_id,rang" }
+    );
+
+    if (erreurFilms) {
+      throw new Error(`Enregistrement des films impossible : ${erreurFilms.message}`);
+    }
 
     await supabase
-      .from("fiches")
-      .update({
-        synthese: resultat.synthese,
-        questions: resultat.questions,
-        modele: process.env.AI_MODEL,
-        statut: "prete",
-      })
-      .eq("id", fiche.id);
+      .from("recherches")
+      .update({ statut: "prete", modele: process.env.AI_MODEL })
+      .eq("id", recherche.id);
 
     return Response.json({ resultat: "prête" });
   } catch (erreur) {
-    console.error(`Échec de la génération (tentative ${tentative + 1}) :`, erreur);
+    console.error(`Échec de la recherche (tentative ${tentative + 1}) :`, erreur);
 
     // Erreur passagère et tentatives restantes : on demande à QStash de réessayer
     if (estReessayable(erreur) && tentative < NOMBRE_REESSAIS) {
@@ -56,9 +62,9 @@ async function traiter(request: Request) {
 
     // Erreur définitive ou dernière tentative : on enregistre l'échec
     await supabase
-      .from("fiches")
+      .from("recherches")
       .update({ statut: "erreur", message_erreur: messageErreurIA(erreur) })
-      .eq("id", fiche.id);
+      .eq("id", recherche.id);
 
     return Response.json({ resultat: "erreur" });
   }

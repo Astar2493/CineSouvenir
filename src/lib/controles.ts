@@ -17,7 +17,7 @@ const controleVercel: Controle = {
 
 const controleIA: Controle = {
   service: "Modèle d'IA",
-  description: "Génération des fiches (API compatible OpenAI)",
+  description: "Recherche de films (API compatible OpenAI)",
   verifier: async () => {
     const baseUrl = process.env.AI_BASE_URL;
     const apiKey = process.env.AI_API_KEY;
@@ -51,18 +51,20 @@ const controleIA: Controle = {
 
 const controleBase: Controle = {
   service: "Supabase Database",
-  description: "Base de données des fiches",
+  description: "Base de données des recherches",
   verifier: async () => {
     const supabase = creerClientAdmin();
-    const { count, error } = await supabase
-      .from("fiches")
-      .select("id", { count: "exact", head: true });
+    const [recherches, films] = await Promise.all([
+      supabase.from("recherches").select("id", { count: "exact", head: true }),
+      supabase.from("films_proposes").select("id", { count: "exact", head: true }),
+    ]);
 
-    if (error) {
-      throw new Error(error.message);
+    const erreur = recherches.error ?? films.error;
+    if (erreur) {
+      throw new Error(erreur.message);
     }
 
-    return `${count ?? 0} fiche(s) enregistrée(s)`;
+    return `${recherches.count ?? 0} recherche(s) · ${films.count ?? 0} film(s) proposé(s)`;
   },
 };
 
@@ -81,32 +83,9 @@ const controleAuth: Controle = {
   },
 };
 
-const controleStockage: Controle = {
-  service: "Supabase Storage",
-  description: "Stockage des cours en PDF",
-  verifier: async () => {
-    const supabase = creerClientAdmin();
-    const { data, error } = await supabase.storage.getBucket("cours");
-
-    if (error || !data) {
-      throw new Error(error?.message ?? "Bucket « cours » introuvable");
-    }
-
-    if (data.public) {
-      throw new Error("Le bucket « cours » est public : les cours sont exposés à tous");
-    }
-
-    const limiteMo = data.file_size_limit
-      ? `${Math.round(data.file_size_limit / 1024 / 1024)} Mo`
-      : "aucune";
-
-    return `Bucket « cours » privé · Taille maximale : ${limiteMo}`;
-  },
-};
-
 const controleRedis: Controle = {
   service: "Upstash Redis",
-  description: "Limitation du nombre de générations",
+  description: "Limitation du nombre de recherches",
   verifier: async () => {
     const reponse = await redis.ping();
 
@@ -121,7 +100,7 @@ const controleRedis: Controle = {
 
 const controleQStash: Controle = {
   service: "Upstash QStash",
-  description: "File de messages des générations",
+  description: "File de messages des recherches",
   verifier: async () => {
     if (!process.env.QSTASH_URL || !process.env.QSTASH_TOKEN) {
       throw new Error("Variables QSTASH_URL ou QSTASH_TOKEN manquantes");
@@ -171,7 +150,6 @@ export const CONTROLES: Controle[] = [
   controleIA,
   controleBase,
   controleAuth,
-  controleStockage,
   controleRedis,
   controleQStash,
   controleRealtime,

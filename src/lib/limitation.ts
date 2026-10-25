@@ -5,7 +5,7 @@ import { Redis } from "@upstash/redis";
 // Lit UPSTASH_REDIS_REST_URL et UPSTASH_REDIS_REST_TOKEN
 export const redis = Redis.fromEnv();
 
-export const QUOTA_GENERATIONS = 5;
+export const QUOTA_GENERATIONS = 10;
 
 export const limiteurGenerations = new Ratelimit({
   redis,

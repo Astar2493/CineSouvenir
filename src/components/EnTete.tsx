@@ -18,9 +18,15 @@ export default async function EnTete() {
     <header className="border-b">
       <div className="mx-auto flex max-w-4xl items-center justify-between p-4 text-sm">
         <Link href="/" className="font-semibold">
-          Fiches de révision
+          CinéSouvenir
         </Link>
         <div className="flex items-center gap-4">
+          <Link href="/recherche" className="hover:underline">
+            Nouvelle recherche
+          </Link>
+          <Link href="/recherches" className="hover:underline">
+            Mes recherches
+          </Link>
           <span className="text-gray-600">{user.email}</span>
           <BoutonDeconnexion />
         </div>

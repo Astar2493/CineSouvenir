@@ -9,7 +9,7 @@ export const qstash = new Client({
   baseUrl: process.env.QSTASH_URL || undefined,
 });
 
-export async function publierGeneration(ficheId: string) {
+export async function publierRecherche(rechercheId: string) {
   const appUrl = process.env.APP_URL;
 
   if (!process.env.QSTASH_URL || !process.env.QSTASH_TOKEN) {
@@ -21,8 +21,8 @@ export async function publierGeneration(ficheId: string) {
   }
 
   return qstash.publishJSON({
-    url: `${appUrl}/api/jobs/generer-fiche`,
-    body: { ficheId },
+    url: `${appUrl}/api/jobs/rechercher-films`,
+    body: { rechercheId },
     retries: NOMBRE_REESSAIS,
   });
 }
