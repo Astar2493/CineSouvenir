@@ -1,6 +1,6 @@
 import "server-only";
 import { redis } from "@/lib/limitation";
-import { qstash } from "@/lib/qstash";
+import { adresseApplication, problemesConfigurationQStash, qstash } from "@/lib/qstash";
 import type { Controle } from "@/lib/statut";
 import { creerClientAdmin } from "@/lib/supabase/admin";
 
@@ -102,12 +102,9 @@ const controleQStash: Controle = {
   service: "Upstash QStash",
   description: "File de messages des recherches",
   verifier: async () => {
-    if (!process.env.QSTASH_URL || !process.env.QSTASH_TOKEN) {
-      throw new Error("Variables QSTASH_URL ou QSTASH_TOKEN manquantes");
-    }
-
-    if (!process.env.APP_URL) {
-      throw new Error("Variable APP_URL manquante : QStash ne saurait pas où livrer les messages");
+    const problemes = problemesConfigurationQStash();
+    if (problemes.length > 0) {
+      throw new Error(problemes.join(" · "));
     }
 
     if (!process.env.QSTASH_CURRENT_SIGNING_KEY || !process.env.QSTASH_NEXT_SIGNING_KEY) {
@@ -116,7 +113,7 @@ const controleQStash: Controle = {
 
     await qstash.schedules.list();
 
-    return `Service joignable · Destination : ${process.env.APP_URL}`;
+    return `Service joignable · Destination : ${adresseApplication()}`;
   },
 };
 

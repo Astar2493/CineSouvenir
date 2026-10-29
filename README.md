@@ -307,5 +307,5 @@ Prérequis : Node.js 20 ou plus récent, un projet Supabase, une base Upstash Re
 | `UPSTASH_REDIS_REST_URL`, `UPSTASH_REDIS_REST_TOKEN` | Base Upstash Redis (ou `KV_REST_API_URL`, `KV_REST_API_TOKEN`) |
 | `QSTASH_URL`, `QSTASH_TOKEN` | Accès à QStash |
 | `QSTASH_CURRENT_SIGNING_KEY`, `QSTASH_NEXT_SIGNING_KEY` | Vérification de la signature des messages reçus par le job |
-| `APP_URL` | Adresse publique de l'application, à laquelle QStash livre les messages |
+| `APP_URL` | Adresse publique de l'application, à laquelle QStash livre les messages. Facultative sur Vercel : le domaine de production est utilisé par défaut. Une adresse `localhost` y est refusée |
 | `ADMIN_EMAILS` | Adresses autorisées à ouvrir `/admin`, séparées par des virgules |
