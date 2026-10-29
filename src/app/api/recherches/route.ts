@@ -1,22 +1,62 @@
+import { cookies } from "next/headers";
 import { limiteurGenerations } from "@/lib/limitation";
 import { publierRecherche } from "@/lib/qstash";
 import { validerDemande } from "@/lib/recherche";
 import { creerClientAdmin } from "@/lib/supabase/admin";
-import { creerClientServeur } from "@/lib/supabase/server";
+import { creerClientAvecJeton, creerClientServeur } from "@/lib/supabase/server";
 
-export async function POST(request: Request) {
-  // 0. Vérification de la session
+// Session lue dans les cookies, ou à défaut dans l'en-tête Authorization envoyé par le formulaire
+async function utilisateurConnecte(request: Request) {
   const supabase = await creerClientServeur();
   const {
     data: { user },
+    error,
   } = await supabase.auth.getUser();
 
-  if (!user) {
+  if (user) {
+    return { supabase, user };
+  }
+
+  const jeton = request.headers.get("Authorization")?.replace(/^Bearer\s+/i, "");
+  if (jeton) {
+    const clientJeton = creerClientAvecJeton(jeton);
+    const { data, error: erreurJeton } = await clientJeton.auth.getUser(jeton);
+
+    if (data.user) {
+      console.warn("Session absente des cookies : utilisation du jeton de l'en-tête Authorization");
+      return { supabase: clientJeton, user: data.user };
+    }
+
+    console.error("Jeton de l'en-tête Authorization refusé :", erreurJeton?.message);
+  }
+
+  // Les noms des cookies (jamais leurs valeurs) aident à comprendre pourquoi la session manque
+  const cookiesSupabase = (await cookies())
+    .getAll()
+    .map((cookie) => cookie.name)
+    .filter((nom) => nom.startsWith("sb-"));
+  console.error(
+    "Session introuvable :",
+    error?.message ?? "aucune erreur",
+    "· cookies Supabase reçus :",
+    cookiesSupabase.join(", ") || "aucun"
+  );
+
+  return null;
+}
+
+export async function POST(request: Request) {
+  // 0. Vérification de la session
+  const session = await utilisateurConnecte(request);
+
+  if (!session) {
     return Response.json(
       { erreur: "Votre session a expiré. Reconnectez-vous pour lancer une recherche." },
       { status: 401 }
     );
   }
+
+  const { supabase, user } = session;
 
   // 1. Validation de la demande
   const demande = validerDemande(await request.json().catch(() => null));

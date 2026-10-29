@@ -36,7 +36,7 @@ export default function FormulaireConnexion({ erreurLien }: { erreurLien: boolea
   if (envoye) {
     return (
       <p className="mt-6 rounded border border-green-300 bg-green-50 p-4 text-green-800">
-        Un lien de connexion vient d'être envoyé à <strong>{email}</strong>. Ouvrez-le
+        Un lien de connexion vient d&apos;être envoyé à <strong>{email}</strong>. Ouvrez-le
         dans ce même navigateur.
       </p>
     );

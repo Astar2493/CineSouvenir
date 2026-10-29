@@ -142,9 +142,18 @@ export default function FormulaireRecherche() {
 
     try {
       setEtape("Envoi de la demande…");
+
+      // Le jeton d'accès accompagne la demande, en secours des cookies de session
+      const {
+        data: { session },
+      } = await creerClientNavigateur().auth.getSession();
+
       const reponse = await fetch("/api/recherches", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          ...(session && { Authorization: `Bearer ${session.access_token}` }),
+        },
         body: JSON.stringify({ souvenir, genre, epoque, details, animation }),
       });
       const donnees = await reponse.json();
